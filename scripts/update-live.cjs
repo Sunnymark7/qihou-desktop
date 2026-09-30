@@ -9,7 +9,7 @@ if(!process.versions.electron){
   app.whenReady().then(async()=>{
     const version='0.3.9',repository=require('../shared/edition.json').repository,config=require('../package.json');
     const {NsisUpdater}=require('electron-updater'),updater=new NsisUpdater({provider:'github',owner:repository.split('/')[0],repo:repository.split('/')[1]});
-    updater.currentVersion=require('semver').parse(version);updater.disableDifferentialDownload=true;
+    updater.currentVersion=new updater.currentVersion.constructor(version);updater.disableDifferentialDownload=true;
     Object.defineProperties(updater.app,{version:{get:()=>version},isPackaged:{get:()=>true},baseCachePath:{get:()=>profile},appUpdateConfigPath:{get:()=>path.join(root,config.build.directories.output,'win-unpacked/resources/app-update.yml')}});
     const {createUpdates}=require('../electron/updates.cjs');
     const service=createUpdates({updater,fetch:(...args)=>net.fetch(...args),publicKey:fs.readFileSync(path.join(root,'shared/update-public.pem'),'utf8'),repository,version});
