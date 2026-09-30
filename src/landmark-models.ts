@@ -1,9 +1,11 @@
 import * as THREE from 'three';
 import {eaveGeometry} from './landmark-detail';
 import { mayWind } from './may-wind';
+import {buildRegionalLandmark} from './regional-models';
 
 // Stylized silhouettes, built from geometry; no downloaded models or texture payloads.
 export function buildLandmark(id:string, parent:THREE.Group, material:(color:number,extra?:Partial<THREE.MeshStandardMaterialParameters>)=>THREE.MeshStandardMaterial) {
+  if(buildRegionalLandmark(id,parent,material))return true;
   const stone=material(0xe4d7b9), red=material(0xa7503e), roof=material(0x48696c,{side:THREE.DoubleSide}), gold=material(0xc9a15c), glass=material(0x90b8bc,{metalness:0.3,roughness:0.3});
   const glow=material(0xc4d7ce,{emissive:0xffbd65,emissiveIntensity:0.08});glow.userData.nightLight=true;
   const mesh=(geo:THREE.BufferGeometry,mat:THREE.Material,x=0,y=0,z=0)=>{const o=new THREE.Mesh(geo,mat);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o;};

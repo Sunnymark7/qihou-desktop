@@ -2,13 +2,13 @@
 name: 栖候（暂定）
 description: Windows 桌面微缩天气原型的已实现视觉系统
 colors:
-  green: "#345f4d"
-  ink: "#263d34"
-  muted: "#627168"
-  line: "#dce3da"
-  page-bg: "#f6f7f4"
+  green: "#0066d6"
+  ink: "#20242b"
+  muted: "#626975"
+  line: "#dce0e7"
+  page-bg: "#f5f6f9"
   surface: "#fff"
-  sidebar-bg: "#eef1ea"
+  sidebar-bg: "#eaf0f7"
   preview-bg: "#e9eee5"
   nav-selected: "#dce6d5"
   widget-surface: "#f7f9f0eb"
@@ -250,3 +250,7 @@ components:
 ## 0.2.3 修订
 
 桌面不含工具条或可点击读数，只保留模型拖动与天气显示，设置从托盘进入。设置左上角使用应用 PNG 图标。雨滴有实际几何粗细，雪花固定屏幕像素，雾层低处漂移；保留后方云层避免遮挡地标。
+
+## 0.5 Apple 设计方向
+
+用户明确指定的设计方向：系统字体、清晰层级、蓝色操作色、功能分组和轻量材质。侧栏使用结构性半透明，操作区与图表使用实色；不叠加玻璃卡片，不仿制 macOS 窗口按钮。src/apple.css 为此方向的集中样式；旧场景与皮肤颜色保留。响应按钮在按下时反馈，预览旋转直接跟随指针并支持惯性、方向键与 Home；系统或设置减少动态时禁用惯性。首次引导三步，支持跳过、返回、更换地点和重看。

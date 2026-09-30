@@ -8,8 +8,8 @@ const location={id:'demo',latitude:31.2304,longitude:121.4737,country:'中国',t
 const open=()=>({timezone:'Asia/Shanghai',current:{temperature_2m:23,time:now/1000,weather_code:95}});
 const met=()=>({properties:{meta:{updated_at:new Date(now-3600000).toISOString()},timeseries:[0,1,2,3,4].map(i=>({time:new Date(now+i*3600000).toISOString(),data:{instant:{details:{air_temperature:20+i,wind_speed:5,wind_from_direction:90}},next_1_hours:{summary:{symbol_code:'heavysleetandthunder'},details:{precipitation_amount:2}}}}))}});
 const response=(data,headers={})=>new Response(JSON.stringify(data),{status:200,headers});
-test('all 16 city centers choose their own landmark and custom model leaves weather location independent',()=>{
-  assert.equal(landmarks.length,16);for(const l of landmarks)assert.equal(landmarkFor(l),l.id);
+test('all city centers choose their own landmark and custom model leaves weather location independent',()=>{
+  assert.equal(landmarks.length,20);for(const l of landmarks)assert.equal(landmarkFor(l),l.id);
   assert.equal(selectedModel({location,model:'landmark',landmarkId:'beijing'}),'beijing');
   assert.deepEqual(sanitizeSettings({landmarkId:'<script>',quality:'max',weatherSource:'https://evil'}),{});
 });

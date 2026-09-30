@@ -1,6 +1,10 @@
 import './style.css';
 import './dashboard.css';
 import './product.css';
+import './apple.css';
+import {mountOnboarding} from './onboarding';
+import {mountLocationPicker} from './location-ui';
+import {escapeHtml as esc} from './ui-utils';
 import appIcon from '../assets/icon.png';
 import { WeatherScene } from './scene';
 import {renderDeskTools,applySkin} from './desk-tools';
@@ -34,7 +38,7 @@ const paths:Record<string,string>={
   pause:'M8 5v14M16 5v14',play:'m8 4 12 8-12 8V4Z',info:'M12 11v6m0-10v1M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0',
 };
 function icon(name:string,size=20){return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[name]||paths.cloud}"/></svg>`;}
-const esc=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
+
 const number=(n:number|null|undefined,unit='')=>n===null||n===undefined?'—':`${Math.round(n)}${unit}`;
 const bridge=getBridge();
 let state=await bridge.state();
@@ -44,7 +48,8 @@ document.documentElement.className=`view-${view}`;
 const app=document.querySelector<HTMLDivElement>('#app')!;
 let tab='weather',demo:Kind|undefined,demoNight=false,scene:WeatherScene|undefined;
 let demoWind:number|undefined,lastReadout='';
-let searchResults:Location[]=[],searchVersion=0,toastTimer:ReturnType<typeof setTimeout>;
+let guide:ReturnType<typeof mountOnboarding>|undefined,picker:ReturnType<typeof mountLocationPicker>|undefined;
+let toastTimer:ReturnType<typeof setTimeout>;
 function clock(time:number|null|undefined){if(!time)return '—';try{return new Intl.DateTimeFormat('zh-CN',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:state.weather?.timezone||'Asia/Shanghai'}).format(time+(state.weather?.utcOffsetSeconds||0)*1000);}catch{return '—';}}
 function freshness(){if(!state.weather)return state.loading?'正在获取天气…':'尚未获取天气';if(state.error)return `缓存 · ${clock(state.weather.dataTime||state.weather.fetchedAt)}`;if(!state.weather.dataTime)return `获取 ${clock(state.weather.fetchedAt)} · 源未提供观测时刻`;if(Date.now()-state.weather.dataTime>90*60_000)return `待更新 · 数据 ${clock(state.weather.dataTime)}`;return `数据 ${clock(state.weather.dataTime)}`;}
 function toast(message:string){const el=document.querySelector<HTMLElement>('#toast');if(!el)return;el.textContent=message.replace(/^Error invoking remote method '[^']+': (Error: )?/,'');el.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.hidden=true,6500);}
@@ -56,7 +61,7 @@ if(view==='settings') {
   <aside class="sidebar">
     <div class="brand"><img class="brand-app-icon" src="${appIcon}" alt="" /><div><strong>栖候</strong><span>桌面上的小小天气</span></div></div>
     <nav aria-label="设置导航"><button class="nav-item active" data-tab="weather">${icon('sun')}此刻天气</button><button class="nav-item" data-tab="scene">${icon('scene')}我的场景</button><button class="nav-item" data-tab="display">${icon('sliders')}桌面与运行</button><button class="nav-item" data-tab="sources">${icon('cloud')}天气来源</button><button class="nav-item" data-tab="tools">${icon('scene')}桌面小工具</button><button class="nav-item" data-tab="account">${icon('key')}激活与更新</button></nav>
-    <div class="sidebar-bottom"><span class="quiet-status"><i></i><span id="resident-label">在托盘中陪伴</span></span><small>栖候 ${esc(state.version||'0.4')} · Windows</small><button class="text-button" data-action="source">天气数据与来源 ${icon('chevron',13)}</button></div>
+    <div class="sidebar-bottom"><span class="quiet-status"><i></i><span id="resident-label">在托盘中陪伴</span></span><button class="text-button" id="guide-button">使用引导</button><small>栖候 ${esc(state.version||'0.4')} · Windows</small><button class="text-button" data-action="source">天气数据与来源 ${icon('chevron',13)}</button></div>
   </aside>
   <main class="main">
     <div id="browser-banner" class="browser-banner" hidden>浏览器设计预览 · 当前数值为演示数据，托盘与真实地点请在桌面版使用。</div>
@@ -77,24 +82,16 @@ if(view==='settings') {
   <dialog id="location-dialog" aria-labelledby="location-title"><div class="dialog-heading"><div><h2 id="location-title">天气，来自哪里？</h2><p>搜索城市或地区，再选择准确的位置。</p></div><button class="icon-button" id="close-dialog" aria-label="关闭地点选择">${icon('close')}</button></div><form id="search-form" class="search-form"><label for="location-query" class="sr-only">城市或地区名称</label><div class="search-input">${icon('search',19)}<input id="location-query" autocomplete="off" placeholder="例如：上海、杭州、London" maxlength="120" required minlength="2" /></div><button class="primary-button" id="search-button">搜索</button></form><div id="search-feedback" role="status" class="search-feedback">搜索结果会显示所属行政区，避免选错同名地点。</div><div id="search-results" class="search-results"></div><details class="coordinates"><summary>详细地址未找到？使用经纬度定位</summary><p>天气服务不提供所有门牌地址。可从地图获取 WGS84 坐标，纬度在前、经度在后；精确坐标不代表门牌级天气观测。</p><form id="coordinate-form"><label>地点名称<input name="name" placeholder="例如：我的家" maxlength="80" required /></label><div class="field-pair"><label>纬度<input name="latitude" type="number" step="any" min="-90" max="90" placeholder="31.2304" required /></label><label>经度<input name="longitude" type="number" step="any" min="-180" max="180" placeholder="121.4737" required /></label></div><button class="primary-button" type="submit">使用这个位置</button></form></details><p class="privacy-note">地点保存在本机；城市目录可离线检索，其他搜索词发送给 Open-Meteo，查询坐标发送给当前天气源和 Open-Meteo 空气质量服务。</p></dialog>
   <div id="toast" class="toast" role="status" hidden></div>`;
   document.querySelectorAll<HTMLButtonElement>('[data-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.tab!;if(tab!=='scene'){demo=undefined;demoWind=undefined;}render();});
-  document.querySelector<HTMLButtonElement>('#close-dialog')!.onclick=()=>document.querySelector<HTMLDialogElement>('#location-dialog')!.close();
   document.querySelector<HTMLButtonElement>('#pause-button')!.onclick=()=>settings({paused:!state.settings.paused});
-  document.querySelector<HTMLFormElement>('#search-form')!.onsubmit=async e=>{
-    e.preventDefault();const query=document.querySelector<HTMLInputElement>('#location-query')!.value.trim();const version=++searchVersion;
-    const button=document.querySelector<HTMLButtonElement>('#search-button')!,feedback=document.querySelector<HTMLElement>('#search-feedback')!;
-    button.disabled=true;button.textContent='搜索中…';feedback.textContent='正在查找地点…';document.querySelector('#search-results')!.replaceChildren();
-    try{const results=await bridge.search(query);if(version!==searchVersion)return;searchResults=results;feedback.textContent=results.length?`找到 ${results.length} 个地点，请选择`:'未找到这个地址，请试试城市名称，或在下方输入经纬度。';document.querySelector('#search-results')!.innerHTML=results.map((r,i)=>`<button class="location-result" data-location="${i}">${icon('pin',18)}<span><strong>${esc(r.name)}</strong><small>${esc([r.admin,r.country].filter(Boolean).join(' · '))}</small></span>${icon('chevron',16)}</button>`).join('');}
-    catch(err){feedback.textContent=(err as Error).message.replace(/^Error invoking remote method '[^']+': (Error: )?/,'');}
-    finally{if(version===searchVersion){button.disabled=false;button.textContent='搜索';}}
-  };
-  document.querySelector<HTMLFormElement>('#coordinate-form')!.onsubmit=async e=>{e.preventDefault();const data=new FormData(e.currentTarget as HTMLFormElement);await choose({name:String(data.get('name')),latitude:Number(data.get('latitude')),longitude:Number(data.get('longitude'))});};
-  document.querySelector('#search-results')!.addEventListener('click',e=>{const b=(e.target as HTMLElement).closest<HTMLButtonElement>('[data-location]');if(b)choose(searchResults[Number(b.dataset.location)]);});
+  picker=mountLocationPicker(bridge,async location=>{state=await bridge.setLocation(location);render();});
+  guide=mountOnboarding(()=>state,async patch=>{try{state=await bridge.settings(patch);render();}catch(e){toast((e as Error).message);throw e;}},()=>picker!.show(),appIcon);
+  document.querySelector<HTMLButtonElement>('#guide-button')!.onclick=()=>guide!.show();
 }else if(view==='tools'){
   app.innerHTML='<main id="desk-board" class="desk-board"></main><div id="toast" class="toast" role="status" hidden></div>';
 }else{
   app.innerHTML=`<main class="desktop-widget"><div id="scene-host" class="scene-host"></div><div class="widget-info" id="widget-info"></div></main><div id="toast" class="toast" role="status" hidden></div>`;
 }
-function openLocation(){document.querySelector<HTMLDialogElement>('#location-dialog')?.showModal();setTimeout(()=>document.querySelector<HTMLInputElement>('#location-query')?.focus(),0);}
+function openLocation(){picker?.show();}
 if((view==='widget'&&window.qihou?.drag)||(view==='tools'&&window.qihou?.deskDrag)){
   const host=document.querySelector<HTMLElement>(view==='tools'?'#desk-board':'#scene-host')!;
   let dragging=false,frame=0;
@@ -104,7 +101,7 @@ if((view==='widget'&&window.qihou?.drag)||(view==='tools'&&window.qihou?.deskDra
   host.addEventListener('pointermove',e=>{if(!dragging)return;if(!(e.buttons&1)){end();return;}if(!frame)frame=requestAnimationFrame(()=>{frame=0;if(dragging)void send('move');});});
   host.addEventListener('pointerup',end);host.addEventListener('pointercancel',end);host.addEventListener('lostpointercapture',end);window.addEventListener('blur',end);
 }
-async function choose(location:Partial<Location>){const feedback=document.querySelector<HTMLElement>('#search-feedback')!;feedback.textContent='正在应用地点并获取天气…';try{await bridge.setLocation(location);document.querySelector<HTMLDialogElement>('#location-dialog')!.close();}catch(e){feedback.textContent=(e as Error).message;}}
+
 app.addEventListener('click',e=>{const b=(e.target as HTMLElement).closest<HTMLButtonElement>('[data-action]');if(!b)return;if(b.dataset.action==='edition'){tab='account';render();}else if(b.dataset.action==='location')openLocation();else action(b.dataset.action!);});
 function toggle(key:string,label:string,description:string,checked:boolean,disabled=false){return `<label class="toggle-row"><span><strong>${label}</strong><small>${description}</small></span><input type="checkbox" role="switch" data-setting="${key}" ${checked?'checked':''} ${disabled?'disabled':''}/></label>`;}
 const landmarkLabel=(id:string|null|undefined)=>{const l=landmarks.find(l=>l.id===id);return l?`${l.city} · ${l.name}`:'尚未收录，自动使用林间小屋';};
@@ -134,7 +131,7 @@ function renderInspector(){
   }else if(tab==='sources'){
     renderSources(el);
   }else{
-    el.innerHTML=`<h2>桌面与后台运行</h2><p class="section-intro">${state.desktop?'已在托盘后台运行。关闭设置窗口不会退出。':'当前为浏览器预览。'}</p>${toggle('visible','显示桌面天气','只控制摆件或壁纸，隐藏后仍在后台更新',state.settings.visible)}<div class="mode-switch" aria-label="显示模式"><button aria-pressed="${state.settings.mode==='widget'}" class="${state.settings.mode==='widget'?'selected':''}" data-action="widget">透明摆件</button><button aria-pressed="${state.settings.mode==='wallpaper'}" class="${state.settings.mode==='wallpaper'?'selected':''}" data-action="wallpaper">动态壁纸</button></div><p class="hint">壁纸为实验性功能；挂载失败自动保留摆件。</p><label class="size-label">摆件大小 <span>${state.settings.size} px</span><input type="range" id="widget-size" min="260" max="540" step="20" value="${state.settings.size}" /></label><div class="toggle-list">${toggle('weatherNotifications','天气提醒','出现强风或强对流时发送一次桌面提示',!!state.settings.weatherNotifications)}${toggle('locked','锁定并穿透鼠标','从托盘或 Ctrl+Alt+W 恢复编辑',state.settings.locked,state.settings.mode==='wallpaper')}${toggle('alwaysOnTop','始终置顶','摆件显示在其他窗口前方',state.settings.alwaysOnTop)}${toggle('showDetails','显示天气文字','在场景下方显示温度与地点',state.settings.showDetails)}${toggle('pauseOnFullscreen','全屏时暂停','减少游戏或视频播放时的占用',state.settings.pauseOnFullscreen)}${toggle('pauseOnBattery','电池供电时暂停','接通电源后恢复动画',state.settings.pauseOnBattery)}${toggle('reducedMotion','减少动态效果','保留静态天气与数据更新',state.settings.reducedMotion)}</div><div class="frame-row"><label for="quality">渲染质量</label><select id="quality">${[['economy','节能 · 无实时阴影'],['balanced','均衡 · 推荐'],['high','精细']].map(([v,l])=>`<option value="${v}" ${(state.settings.quality||'balanced')===v?'selected':''}>${l}</option>`).join('')}</select></div><div class="frame-row"><label for="fps">动画帧率</label><select id="fps">${[15,30,60].map(n=>`<option value="${n}" ${state.settings.fps===n?'selected':''}>${n} FPS${n===30?' · 推荐':''}</option>`).join('')}</select></div><button class="subtle-button startup-button" data-action="startup" ${!state.packaged?'disabled':''}>${state.autoStart?'开机启动：已开启 · 点击关闭':'开机启动：已关闭 · 点击开启'}</button>${!state.packaged?'<p class="hint">开机启动在打包版本中可用。</p>':''}`;
+    el.innerHTML=`<h2>桌面与后台运行</h2><p class="section-intro">${state.desktop?'已在托盘后台运行。关闭设置窗口不会退出。':'当前为浏览器预览。'}</p>${toggle('visible','显示桌面天气','只控制摆件或壁纸，隐藏后仍在后台更新',state.settings.visible)}<div class="mode-switch" aria-label="显示模式"><button aria-pressed="${state.settings.mode==='widget'}" class="${state.settings.mode==='widget'?'selected':''}" data-action="widget">透明摆件</button><button aria-pressed="${state.settings.mode==='wallpaper'}" class="${state.settings.mode==='wallpaper'?'selected':''}" data-action="wallpaper">动态壁纸</button></div><p class="hint">壁纸为实验性功能；挂载失败自动保留摆件。</p><label class="size-label">摆件大小 <span>${state.settings.size} px</span><input type="range" id="widget-size" min="260" max="540" step="20" value="${state.settings.size}" /></label><section class="settings-group"><h3>操作与提醒</h3><div class="toggle-list">${toggle('weatherNotifications','天气提醒','出现强风或强对流时发送一次桌面提示',!!state.settings.weatherNotifications)}${toggle('locked','锁定并穿透鼠标','从托盘或 Ctrl+Alt+W 恢复编辑',state.settings.locked,state.settings.mode==='wallpaper')}${toggle('alwaysOnTop','始终置顶','摆件显示在其他窗口前方',state.settings.alwaysOnTop)}${toggle('showDetails','显示天气文字','在场景下方显示温度与地点',state.settings.showDetails)}</div></section><section class="settings-group"><h3>动画与节能</h3><div class="toggle-list">${toggle('pauseOnFullscreen','全屏时暂停','减少游戏或视频播放时的占用',state.settings.pauseOnFullscreen)}${toggle('pauseOnBattery','电池供电时暂停','接通电源后恢复动画',state.settings.pauseOnBattery)}${toggle('reducedMotion','减少动态效果','保留静态天气与数据更新',state.settings.reducedMotion)}</div></section><details class="advanced-settings"><summary>渲染质量与帧率</summary><div class="frame-row"><label for="quality">渲染质量</label><select id="quality">${[['economy','节能 · 无实时阴影'],['balanced','均衡 · 推荐'],['high','精细']].map(([v,l])=>`<option value="${v}" ${(state.settings.quality||'balanced')===v?'selected':''}>${l}</option>`).join('')}</select></div><div class="frame-row"><label for="fps">动画帧率</label><select id="fps">${[15,30,60].map(n=>`<option value="${n}" ${state.settings.fps===n?'selected':''}>${n} FPS${n===30?' · 推荐':''}</option>`).join('')}</select></div></details><button class="subtle-button startup-button" data-action="startup" ${!state.packaged?'disabled':''}>${state.autoStart?'开机启动：已开启 · 点击关闭':'开机启动：已关闭 · 点击开启'}</button>${!state.packaged?'<p class="hint">开机启动在打包版本中可用。</p>':''}`;
     el.querySelectorAll<HTMLInputElement>('[data-setting]').forEach(i=>i.onchange=()=>settings({[i.dataset.setting!]:i.checked}));
     el.querySelector<HTMLInputElement>('#widget-size')!.onchange=e=>settings({size:Number((e.target as HTMLInputElement).value)});
     el.querySelector<HTMLSelectElement>('#quality')!.onchange=e=>settings({quality:(e.target as HTMLSelectElement).value});
@@ -154,6 +151,8 @@ function renderSources(el:Element){
 
 function render(){
   applySkin(state);
+  document.body.classList.toggle('reduce-motion',state.settings.reducedMotion);
+  guide?.update();
   if(view==='tools'){renderDeskTools(document.querySelector('#desk-board')!,state,bridge,next=>{state=next;render();},toast,true);return;}
   const focusId=(document.activeElement as HTMLElement)?.id;
   if(view==='settings') {
@@ -186,7 +185,8 @@ function render(){
       lower.querySelectorAll<HTMLButtonElement>('[data-favorite-id]').forEach(b=>b.onclick=async()=>{if(!gate())return;try{state=await bridge.favorite!({action:'select',id:b.dataset.favoriteId});render();}catch(e){toast((e as Error).message);}});
       lower.querySelector<HTMLButtonElement>('#export-history')!.onclick=()=>{if(gate())void action('export');};
     }else if(tab==='scene'){
-      lower.insertAdjacentHTML('beforeend',`<section class="city-library"><div class="section-heading"><h2>16 座城市 · 各有一个轮廓</h2><span>经典模型全部免费</span></div><div class="city-grid">${landmarks.map(l=>`<button data-city="${l.id}" aria-pressed="${state.model===l.id}"><strong>${l.city}</strong><span>${l.name}</span><small>${l.signature}</small></button>`).join('')}</div><p class="hint">${esc(landmarks.find(l=>l.id===state.model)?.story||'从熟悉的城市开始。')} · 原创微缩示意模型</p></section>`);
+      lower.insertAdjacentHTML('beforeend',`<section class="city-library"><div class="section-heading"><h2>${landmarks.length} 座城市 · 各有一个轮廓</h2><span>经典模型全部免费</span></div><label class="city-filter">筛选地标<input id="city-filter" placeholder="城市或建筑名称" autocomplete="off"/><span id="city-count">${landmarks.length} 个地标</span></label><div class="city-grid">${landmarks.map(l=>`<button data-city="${l.id}" aria-pressed="${state.model===l.id}"><strong>${l.city}</strong><span>${l.name}</span><small>${l.signature}</small></button>`).join('')}</div><p class="hint">${esc(landmarks.find(l=>l.id===state.model)?.story||'从熟悉的城市开始。')} · 原创微缩示意模型</p></section>`);
+      lower.querySelector<HTMLInputElement>('#city-filter')!.oninput=e=>{const q=(e.target as HTMLInputElement).value.trim().toLowerCase();let count=0;lower.querySelectorAll<HTMLButtonElement>('[data-city]').forEach(b=>{const l=landmarks.find(l=>l.id===b.dataset.city)!;b.hidden=![l.city,l.name,l.en].some(v=>v.toLowerCase().includes(q));if(!b.hidden)count++;});lower.querySelector('#city-count')!.textContent=count?`${count} 个地标`:'暂无匹配地标';};
       lower.querySelectorAll<HTMLButtonElement>('[data-city]').forEach(b=>b.onclick=()=>settings({model:'landmark',landmarkId:b.dataset.city}));
     }
     document.querySelector('#source-line')!.textContent=state.desktop?(state.weather?`${state.weather.provider} · ${state.weather.dataType==='forecast'?'当前时段预报':state.weather.dataType==='model'?'天气模型数据':'当前天气'} · 获取 ${clock(state.weather.fetchedAt)}${state.weather.sourceNote?' · '+state.weather.sourceNote:''}`:'等待天气源返回数据'):'浏览器预览使用演示数据';
@@ -203,6 +203,7 @@ try{if(view!=='tools')scene=new WeatherScene(document.querySelector('#scene-host
 if(state.testMode)Object.defineProperty(window,'qihouTest',{value:()=>scene?.stats()});
 bridge.subscribe(next=>{state=next;render();});
 render();
+if(view==='settings'&&state.desktop&&!state.settings.onboardingComplete)guide?.show();
 const clockTimer=setInterval(()=>{if(!document.hidden)render();},60_000);
 window.addEventListener('beforeunload',()=>{clearInterval(clockTimer);scene?.dispose();});
 

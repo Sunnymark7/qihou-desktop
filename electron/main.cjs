@@ -11,6 +11,7 @@ const {createFavorites,insights,historyCsv}=require('./tools.cjs');
 const {createDeskTools}=require('./desk-tools.cjs');
 const edition=require('../shared/edition.json');
 const landmarks = require('../shared/landmarks.json');
+const {localSearch} = require('./locations.cjs');
 const { SOURCES, createWeatherService, validateCredentials } = require('./providers.cjs');
 
 const root = path.join(__dirname, '..');
@@ -61,6 +62,8 @@ function restore() {
     const saved = JSON.parse(fs.readFileSync(stateFile(), 'utf8'));
     settings = { ...defaults, ...sanitizeSettings(saved.settings) };
     if (saved.settings?.location) settings.location = validateLocation(saved.settings.location);
+    // Existing configured installations do not need to repeat first-run setup.
+    if (saved.settings?.onboardingComplete === undefined && settings.location) settings.onboardingComplete = true;
     if (saved.settings?.position && Number.isFinite(saved.settings.position.x) && Number.isFinite(saved.settings.position.y)) settings.position = saved.settings.position;
     if (saved.settings?.mode === 'wallpaper') settings.mode = 'wallpaper';
     if (saved.weather?.locationId === settings.location?.id && Number.isFinite(saved.weather?.fetchedAt) && Number.isFinite(saved.weather?.temperature)) weather = saved.weather;
@@ -84,7 +87,7 @@ function notify(message) {
   if (Notification.isSupported()) new Notification({ title: '栖候', body: message, icon: path.join(root, 'assets/icon.png'), silent: true }).show();
 }
 function createWindow(role, options) {
-  const win = new BrowserWindow({ show: false, skipTaskbar: true, icon: path.join(root, 'assets/icon.png'), backgroundColor: role === 'settings' ? '#f6f7f4' : '#00000000', ...options, webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true, webSecurity: true } });
+  const win = new BrowserWindow({ show: false, skipTaskbar: true, icon: path.join(root, 'assets/icon.png'), backgroundColor: role === 'settings' ? '#f5f6f9' : '#00000000', ...options, webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true, webSecurity: true } });
   win.qihouRole = role;
   desktop.hideFromTaskbar(win);
   win.setMenu(null);
@@ -236,7 +239,7 @@ const aliases = { '上海': 'Shanghai', '上海市': 'Shanghai', '北京': 'Beij
 async function search(query) {
   if (typeof query !== 'string' || query.trim().length < 2 || query.length > 120) throw Error('请输入至少两个字符的城市或地区名称');
   query = query.trim();
-  const local = landmarks.filter(l=>[l.city,l.city+'市',l.en.toLowerCase(),l.name].includes(query.toLowerCase())).map(l=>validateLocation({name:l.city,latitude:l.latitude,longitude:l.longitude,admin:'内置城市中心坐标',country:'中国',timezone:'Asia/Shanghai'}));
+  const local = localSearch(query);
   if(local.length) return local;
   if (searchCache.has(query)) return searchCache.get(query);
   if (Date.now() - lastSearch < 700) throw Error('请稍等片刻再搜索');

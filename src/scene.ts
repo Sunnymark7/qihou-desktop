@@ -60,6 +60,8 @@ export class WeatherScene {
   private modelMaterials: THREE.Material[] = [];
   private skin='garden';
   private targetRotation = -0.12;
+  private draggingOrbit = false;
+  private orbitVelocity = 0;
   private errorBox: HTMLParagraphElement;
   private interactive: boolean;
   private visibilityHandler = () => { this.hidden = document.hidden; this.invalidate(); };
@@ -137,11 +139,13 @@ export class WeatherScene {
     this.renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();this.errorBox.hidden=false;cancelAnimationFrame(this.raf);this.raf=0;});
     this.renderer.domElement.addEventListener('webglcontextrestored',()=>{this.errorBox.hidden=true;this.invalidate();});
     if(this.interactive) {
-      let startX=0, dragging=false, original=0;
-      this.renderer.domElement.addEventListener('pointerdown',e=>{ dragging=true;startX=e.clientX;original=this.targetRotation;this.renderer.domElement.setPointerCapture(e.pointerId); });
-      this.renderer.domElement.addEventListener('pointermove',e=>{if(dragging){this.targetRotation=original+(e.clientX-startX)*0.008;this.invalidate();}});
-      this.renderer.domElement.addEventListener('pointerup',()=>{dragging=false;});
-      this.renderer.domElement.addEventListener('pointercancel',()=>{dragging=false;});
+      let previousX=0,previousTime=0;
+      const canvas=this.renderer.domElement;canvas.tabIndex=0;canvas.setAttribute('role','img');canvas.setAttribute('aria-label','城市天气场景。拖动或左右方向键旋转，Home 恢复角度。');
+      canvas.addEventListener('pointerdown',e=>{if(e.button!==0)return;this.draggingOrbit=true;this.orbitVelocity=0;this.targetRotation=this.world.rotation.y;previousX=e.clientX;previousTime=e.timeStamp;canvas.setPointerCapture(e.pointerId);});
+      canvas.addEventListener('pointermove',e=>{if(!this.draggingOrbit)return;const delta=(e.clientX-previousX)*.008;this.orbitVelocity=THREE.MathUtils.clamp(delta/Math.max(.008,(e.timeStamp-previousTime)/1000),-3,3);this.targetRotation+=delta;this.world.rotation.y=this.targetRotation;previousX=e.clientX;previousTime=e.timeStamp;this.invalidate();});
+      canvas.addEventListener('pointerup',e=>{this.draggingOrbit=false;if(e.timeStamp-previousTime>100||this.reduced)this.orbitVelocity=0;this.invalidate();});
+      canvas.addEventListener('pointercancel',()=>{this.draggingOrbit=false;this.orbitVelocity=0;});canvas.addEventListener('lostpointercapture',()=>{this.draggingOrbit=false;});
+      canvas.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','Home'].includes(e.key))return;e.preventDefault();this.orbitVelocity=0;this.targetRotation=e.key==='Home'?-.12:this.targetRotation+(e.key==='ArrowLeft'?-.2:.2);this.invalidate();});
     }
     this.resize();
   }
@@ -302,7 +306,8 @@ export class WeatherScene {
     this.windSock.rotation.y=heading;
     this.windSock.children.forEach((band,i)=>{band.position.y=-i*.085*(1-this.windDisplay)+Math.sin(this.time*(2+this.windDisplay*5)-i*.7)*.045*this.windDisplay;band.rotation.y=Math.sin(this.time*3-i)*.1*this.windDisplay;});
     this.modelGroup.children.forEach(o=>{if(o.userData.treeCrown){o.rotation.z=Math.sin(this.time*(1+this.windDisplay*3)+o.position.x)*.16*this.windDisplay;o.rotation.x=Math.cos(this.time*1.5+o.position.z)*.09*this.windDisplay;}});
-    this.world.rotation.y=THREE.MathUtils.lerp(this.world.rotation.y,this.targetRotation,this.reduced||this.paused?1:0.12);
+    if(!this.draggingOrbit&&!this.reduced&&!this.paused){this.targetRotation+=this.orbitVelocity*dt;this.orbitVelocity*=Math.exp(-7*dt);if(Math.abs(this.orbitVelocity)<.01)this.orbitVelocity=0;}
+    this.world.rotation.y=THREE.MathUtils.lerp(this.world.rotation.y,this.targetRotation,this.draggingOrbit||this.reduced||this.paused?1:1-Math.exp(-12*Math.max(dt,1/60)));
     const dark=this.effects.rain>0||this.effects.thunder||this.kind==='overcast';
     const blend=this.paused||this.reduced?1:0.12;
     this.hemi.intensity=THREE.MathUtils.lerp(this.hemi.intensity,this.night?0.85:dark?1.8:2.5,blend);

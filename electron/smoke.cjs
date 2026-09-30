@@ -19,6 +19,8 @@ exports.run=async ctx=>{
   function monitor(win){if(windows.includes(win))return;windows.push(win);win.webContents.on('console-message',event=>{if(event.level==='error')report.errors.push(event.message);});win.webContents.on('preload-error',(_e,_p,error)=>report.errors.push(error.message));}
   monitor(ctx.widget());
   await delay(2500);
+  // Animation assertions are independent of the host laptop's battery/fullscreen state.
+  ctx.updateSettings({pauseOnBattery:false,pauseOnFullscreen:false});
   assert.ok(ctx.tray&&!ctx.tray.isDestroyed());report.checks.push('Native tray created');
   assert.equal(ctx.widget().isVisible(),true);report.checks.push('Widget visible with settings closed');
   assert.equal(ctx.control(),undefined);
@@ -53,6 +55,12 @@ exports.run=async ctx=>{
   report.checks.push('300 renderer IPC drag moves with controlled cursor preserve exact physical width/height and persist new position');
   ctx.openSettings();await delay(2000);monitor(ctx.control());
   const control=ctx.control();
+  assert.ok(await control.webContents.executeJavaScript('document.querySelector("#onboarding-dialog").open'));
+  fs.writeFileSync(path.join(out,'onboarding.png'),(await capture(control)).toPNG());
+  await control.webContents.executeJavaScript('document.querySelector("#onboarding-skip").click()');await delay(150);
+  assert.equal(ctx.state().settings.onboardingComplete,true);
+  assert.ok(!await control.webContents.executeJavaScript('document.querySelector("#onboarding-dialog").open'));
+  report.checks.push('First settings opening shows a dismissible setup guide and persists completion; background startup stays quiet');
   assertSkipsTaskbar(control,'settings opened');
   control.hide();ctx.openSettings();await delay(150);
   assertSkipsTaskbar(control,'existing settings reopened');
@@ -85,6 +93,13 @@ exports.run=async ctx=>{
     if(ctx.state().weather){report.weather=ctx.state().weather;report.checks.push('Live weather fetched and normalized');}else report.errors.push('Live weather unavailable: '+ctx.state().error);
   }catch(e){report.errors.push('Live network test: '+e.message);}
   await delay(2200);
+  await control.webContents.executeJavaScript('document.querySelector("#guide-button").click();document.querySelector("#onboarding-location").click();document.querySelector("#close-dialog").click();document.querySelector("#onboarding-next").click()');
+  assert.ok(await control.webContents.executeJavaScript('document.querySelector("#onboarding-title").textContent.includes("节奏")'));
+  await control.webContents.executeJavaScript('document.querySelector("#onboarding-next").click()');
+  assert.ok(await control.webContents.executeJavaScript('document.querySelector(".onboarding-tips").textContent.includes("Ctrl+Alt+W")'));
+  await control.webContents.executeJavaScript('document.querySelector("#onboarding-next").click()');await delay(100);
+  assert.ok(!await control.webContents.executeJavaScript('document.querySelector("#onboarding-dialog").open'));
+  report.checks.push('Repeat guide supports location-dialog return, all three steps and completion without changing an existing location');
   for(let i=0;i<24&&ctx.state().environment?.loading;i++)await delay(500);
   const air=ctx.state().environment?.air;
   if(air){assert.ok(air.hours.length>1);report.air={aqi:air.aqi,pm25:air.pm25,standard:air.standard,dataTime:air.time};report.checks.push('Live Open-Meteo CAMS air data and hourly forecast received independently');}
@@ -128,7 +143,11 @@ exports.run=async ctx=>{
     assert.ok(readoutPixels>dimensions.width*dimensions.height*.02,`Weather readout must remain painted for ${l.id}`);
     fs.writeFileSync(path.join(out,'landmark-'+l.id+'.png'),shot.toPNG());
   }
-  report.checks.push('All 16 landmark models render without changing weather location');
+  report.checks.push('All 20 landmark models render without changing weather location');
+  await control.webContents.executeJavaScript('(()=>{const input=document.querySelector("#city-filter");input.value="哈尔滨";input.dispatchEvent(new Event("input"));})()');
+  assert.equal(await control.webContents.executeJavaScript('document.querySelectorAll("[data-city]:not([hidden])").length'),1);
+  await control.webContents.executeJavaScript('(()=>{const input=document.querySelector("#city-filter");input.value="";input.dispatchEvent(new Event("input"));})()');
+  report.checks.push('City library filters new landmarks without changing the chosen weather city');
   if(process.env.QIHOU_TEST_SIGNING_KEY&&fs.existsSync(process.env.QIHOU_TEST_SIGNING_KEY)){
     const crypto=require('node:crypto');
     const payload=Buffer.from(JSON.stringify({product:'qihou',version:1,id:crypto.randomUUID(),device:ctx.licensing.state().device,plan:'trial',issuedAt:Date.now(),expiresAt:Date.now()+7*86400000}));
@@ -180,7 +199,7 @@ exports.run=async ctx=>{
       assert.ok(painted>size.width*size.height*.02,`Crafted ${l.id} must retain painted weather readout`);
       fs.writeFileSync(path.join(out,'crafted-'+l.id+'.png'),shot.toPNG());
     }
-    report.checks.push('All 16 crafted landmarks render with additional geometry and preserve the chosen weather location');
+    report.checks.push('All 20 crafted landmarks render with additional geometry and preserve the chosen weather location');
     fs.writeFileSync(path.join(out,'scene-crafted.png'),(await capture(control)).toPNG());ctx.updateSettings({detail:'classic'});
   }else report.skipped=['Publisher-signed renderer activation requires owner local private key; unit tests use ephemeral test keys'];
   ctx.updateSettings({model:'landmark',landmarkId:'qingdao'});await delay(200);

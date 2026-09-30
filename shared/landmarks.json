@@ -174,5 +174,9 @@
     "radius": 35,
     "signature": "风帆双塔",
     "story": "面向海面的两片帆"
-  }
+  },
+  {"id":"harbin","city":"哈尔滨","name":"圣索菲亚教堂","en":"Harbin","latitude":45.8038,"longitude":126.5349,"radius":50,"signature":"葱头穹顶与砖红钟楼","story":"一座广场上的绿色穹顶"},
+  {"id":"nanchang","city":"南昌","name":"滕王阁","en":"Nanchang","latitude":28.6829,"longitude":115.8582,"radius":45,"signature":"层叠碧檐与左右翼阁","story":"赣江畔的楼阁与长廊"},
+  {"id":"guiyang","city":"贵阳","name":"甲秀楼","en":"Guiyang","latitude":26.647,"longitude":106.6302,"radius":40,"signature":"三重飞檐与浮玉石桥","story":"南明河中的一座朱梁碧瓦"},
+  {"id":"lhasa","city":"拉萨","name":"布达拉宫","en":"Lhasa","latitude":29.652,"longitude":91.1721,"radius":40,"signature":"山台、白宫与中央红宫","story":"红与白，沿山势向上生长"}
 ]

@@ -25,7 +25,15 @@ function validateLocation(input) {
 }
 function landmarkFor(location) {
   if (!location) return null;
-  const distance = (lat, lon) => Math.hypot((location.latitude - lat) * 111, (location.longitude - lon) * 111 * Math.cos(lat * Math.PI / 180));
+  const cityName = String(location.name || '').replace(/市$/, '');
+  // Recognized cities without assets keep the cottage, rather than borrowing a neighbour's identity.
+  if (require('../shared/cities.json').some(c => c.name === cityName) && !landmarks.some(l => l.city === cityName)) return null;
+  if (!Number.isFinite(location.latitude) || !Number.isFinite(location.longitude)) return null;
+  const distance = (lat, lon) => {
+    const rad = Math.PI / 180, dLat = (lat - location.latitude) * rad, dLon = (lon - location.longitude) * rad;
+    const a = Math.sin(dLat/2)**2 + Math.cos(lat*rad)*Math.cos(location.latitude*rad)*Math.sin(dLon/2)**2;
+    return 6371 * 2 * Math.atan2(Math.sqrt(a),Math.sqrt(Math.max(0,1-a)));
+  };
   return landmarks.map(l => ({ ...l, distance: distance(l.latitude, l.longitude) })).filter(l => l.distance < l.radius).sort((a,b) => a.distance-b.distance)[0]?.id || null;
 }
 function selectedModel(settings) {
@@ -61,7 +69,7 @@ function weatherUrl(location) {
 }
 function sanitizeSettings(patch) {
   const out = {};
-  for (const key of ['locked', 'alwaysOnTop', 'paused', 'visible', 'reducedMotion', 'pauseOnBattery', 'pauseOnFullscreen', 'showDetails','weatherNotifications']) if (typeof patch?.[key] === 'boolean') out[key] = patch[key];
+  for (const key of ['locked', 'alwaysOnTop', 'paused', 'visible', 'reducedMotion', 'pauseOnBattery', 'pauseOnFullscreen', 'showDetails','weatherNotifications','onboardingComplete']) if (typeof patch?.[key] === 'boolean') out[key] = patch[key];
   if (['auto', 'default', 'landmark'].includes(patch?.model)) out.model = patch.model;
   if (landmarks.some(l => l.id === patch?.landmarkId)) out.landmarkId = patch.landmarkId;
   if (['auto','openmeteo','metno','openweather','qweather'].includes(patch?.weatherSource)) out.weatherSource = patch.weatherSource;
