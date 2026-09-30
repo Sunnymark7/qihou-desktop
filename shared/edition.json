@@ -1,0 +1,16 @@
+{
+  "name": "栖候",
+  "repository": "Sunnymark7/qihou-desktop",
+  "trialDays": 7,
+  "trialPrice": 1,
+  "lifetimePrice": 5,
+  "purchaseUrl": "",
+  "features": [
+    "精雕地标与城市场景",
+    "最多 8 个收藏地点",
+    "7 天本机历史曲线",
+    "CSV 数据导出",
+    "桌面便利贴与倒数日",
+    "四套场景与卡片皮肤"
+  ]
+}

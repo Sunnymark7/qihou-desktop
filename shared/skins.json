@@ -1,0 +1,6 @@
+[
+  {"id":"garden","name":"苔庭","description":"青草、奶油石阶与暖木","ink":"#263d34","surface":"#f6f7f0","accent":"#345f4d","grass":9283961,"stone":12958886,"leaf":5406044,"water":8960448},
+  {"id":"coast","name":"海盐","description":"沙岸、青蓝水面与浅色植被","ink":"#214959","surface":"#eef6f7","accent":"#2f7186","grass":10142124,"stone":14538940,"leaf":6195081,"water":4562886},
+  {"id":"sakura","name":"樱信","description":"粉色树冠、春日草地与暖色纸张","ink":"#593c4c","surface":"#fbf2f5","accent":"#945e79","grass":11255943,"stone":15065546,"leaf":14129601,"water":9755353},
+  {"id":"midnight","name":"星夜","description":"蓝灰岛屿、银色水面与深色卡片","ink":"#e4eaf2","surface":"#253242","accent":"#abc8de","grass":4873312,"stone":6386041,"leaf":7241114,"water":7510936}
+]

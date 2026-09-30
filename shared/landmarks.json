@@ -1,0 +1,178 @@
+[
+  {
+    "id": "shanghai",
+    "city": "上海",
+    "name": "东方明珠",
+    "en": "Shanghai",
+    "latitude": 31.2304,
+    "longitude": 121.4737,
+    "radius": 55,
+    "signature": "双球与针塔",
+    "story": "城市天际线里的明珠"
+  },
+  {
+    "id": "guangzhou",
+    "city": "广州",
+    "name": "广州塔",
+    "en": "Guangzhou",
+    "latitude": 23.1291,
+    "longitude": 113.2644,
+    "radius": 50,
+    "signature": "纤腰与交错钢网",
+    "story": "一束向天空延伸的光"
+  },
+  {
+    "id": "beijing",
+    "city": "北京",
+    "name": "天坛祈年殿",
+    "en": "Beijing",
+    "latitude": 39.9042,
+    "longitude": 116.4074,
+    "radius": 55,
+    "signature": "三重蓝瓦圆檐",
+    "story": "蓝瓦、金顶与白石台基"
+  },
+  {
+    "id": "shenzhen",
+    "city": "深圳",
+    "name": "平安金融中心",
+    "en": "Shenzhen",
+    "latitude": 22.5431,
+    "longitude": 114.0579,
+    "radius": 40,
+    "signature": "八面收束的塔冠",
+    "story": "棱线向云端聚拢"
+  },
+  {
+    "id": "wuhan",
+    "city": "武汉",
+    "name": "黄鹤楼",
+    "en": "Wuhan",
+    "latitude": 30.5928,
+    "longitude": 114.3055,
+    "radius": 50,
+    "signature": "五层飞檐",
+    "story": "江岸之上的层叠金檐"
+  },
+  {
+    "id": "hangzhou",
+    "city": "杭州",
+    "name": "雷峰塔",
+    "en": "Hangzhou",
+    "latitude": 30.2741,
+    "longitude": 120.1551,
+    "radius": 45,
+    "signature": "八角塔身",
+    "story": "湖畔的五重塔影"
+  },
+  {
+    "id": "xian",
+    "city": "西安",
+    "name": "大雁塔",
+    "en": "Xi'an",
+    "latitude": 34.3416,
+    "longitude": 108.9398,
+    "radius": 50,
+    "signature": "七层砖塔",
+    "story": "砖石纹理里的古城记忆"
+  },
+  {
+    "id": "chengdu",
+    "city": "成都",
+    "name": "安顺廊桥",
+    "en": "Chengdu",
+    "latitude": 30.5728,
+    "longitude": 104.0668,
+    "radius": 55,
+    "signature": "廊桥与三孔桥拱",
+    "story": "一座跨过水面的屋檐"
+  },
+  {
+    "id": "chongqing",
+    "city": "重庆",
+    "name": "洪崖洞",
+    "en": "Chongqing",
+    "latitude": 29.563,
+    "longitude": 106.5516,
+    "radius": 45,
+    "signature": "层叠吊脚楼",
+    "story": "台阶连接的山城灯火"
+  },
+  {
+    "id": "tianjin",
+    "city": "天津",
+    "name": "天津之眼",
+    "en": "Tianjin",
+    "latitude": 39.0842,
+    "longitude": 117.2009,
+    "radius": 50,
+    "signature": "桥上摩天轮",
+    "story": "把轮廓留在河面上"
+  },
+  {
+    "id": "suzhou",
+    "city": "苏州",
+    "name": "东方之门",
+    "en": "Suzhou",
+    "latitude": 31.2989,
+    "longitude": 120.5853,
+    "radius": 40,
+    "signature": "门形双塔",
+    "story": "两座塔之间的一道弧"
+  },
+  {
+    "id": "nanjing",
+    "city": "南京",
+    "name": "紫峰大厦",
+    "en": "Nanjing",
+    "latitude": 32.0603,
+    "longitude": 118.7969,
+    "radius": 50,
+    "signature": "阶梯塔冠",
+    "story": "一片向上的玻璃山峰"
+  },
+  {
+    "id": "zhengzhou",
+    "city": "郑州",
+    "name": "中原福塔",
+    "en": "Zhengzhou",
+    "latitude": 34.7466,
+    "longitude": 113.6253,
+    "radius": 50,
+    "signature": "四肢旋转钢架",
+    "story": "承托观景平台的钢骨"
+  },
+  {
+    "id": "qingdao",
+    "city": "青岛",
+    "name": "五月的风",
+    "en": "Qingdao",
+    "latitude": 36.0671,
+    "longitude": 120.3826,
+    "radius": 45,
+    "signature": "红色钢带螺旋",
+    "story": "海风里旋转的红色记忆"
+  },
+  {
+    "id": "changsha",
+    "city": "长沙",
+    "name": "国际金融中心",
+    "en": "Changsha",
+    "latitude": 28.2282,
+    "longitude": 112.9388,
+    "radius": 45,
+    "signature": "高低双塔",
+    "story": "双塔之间的城市节奏"
+  },
+  {
+    "id": "xiamen",
+    "city": "厦门",
+    "name": "世茂海峡双子塔",
+    "en": "Xiamen",
+    "latitude": 24.4798,
+    "longitude": 118.0894,
+    "radius": 35,
+    "signature": "风帆双塔",
+    "story": "面向海面的两片帆"
+  }
+]

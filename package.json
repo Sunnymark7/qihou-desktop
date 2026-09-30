@@ -1,0 +1,121 @@
+{
+  "name": "qihou-weather",
+  "productName": "栖候",
+  "version": "0.4.0",
+  "private": true,
+  "type": "module",
+  "description": "A living weather diorama for your desktop",
+  "author": "Qihou contributors",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "start": "npm run build && electron .",
+    "test": "node --test tests/*.test.cjs",
+    "package": "npm run build && node scripts/package.cjs --dir",
+    "smoke": "node scripts/smoke.cjs",
+    "dist": "npm run build && node scripts/package.cjs nsis",
+    "dist:portable": "npm run build && node scripts/package.cjs 7z zip",
+    "license:issue": "node scripts/publisher.cjs issue",
+    "release:manifest": "node scripts/publisher.cjs manifest"
+  },
+  "dependencies": {
+    "electron-updater": "6.8.9",
+    "koffi": "3.2.1",
+    "three": "0.186.0"
+  },
+  "devDependencies": {
+    "@types/three": "0.185.4",
+    "electron": "44.3.0",
+    "electron-builder": "26.15.3",
+    "typescript": "7.0.2",
+    "vite": "8.3.0"
+  },
+  "build": {
+    "appId": "local.qihou.weather",
+    "productName": "Qihou",
+    "directories": {
+      "output": "release-v0.4.0"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "assets/**/*",
+      "!assets/icon-master.png",
+      "package.json",
+      "shared/**/*",
+      "!node_modules/three/**/*",
+      "!node_modules/koffi/{vendor,lib,doc,test,tools,benchmark}/**/*",
+      "!node_modules/koffi/**/*.{h,hh,hpp,cc,cpp,c,inc,ts,map,md}",
+      "!node_modules/koffi/cnoke.cjs"
+    ],
+    "asarUnpack": [
+      "**/*.node"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico",
+      "signExecutable": false
+    },
+    "compression": "maximum",
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "selectPerMachineByDefault": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "栖候",
+      "uninstallDisplayName": "栖候 Qihou",
+      "installerLanguages": [
+        "zh_CN",
+        "en_US"
+      ],
+      "language": "2052",
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "Qihou-${version}-Setup-x64.${ext}"
+    },
+    "electronLanguages": [
+      "zh-CN",
+      "en-US"
+    ],
+    "artifactName": "Qihou-${version}-win-x64.${ext}",
+    "extraFiles": [
+      {
+        "from": "README.md",
+        "to": "README.md"
+      },
+      {
+        "from": "THIRD_PARTY_NOTICES.md",
+        "to": "THIRD_PARTY_NOTICES.md"
+      },
+      {
+        "from": "docs",
+        "to": "docs",
+        "filter": [
+          "api-sources.md",
+          "release-0.2.md",
+          "may-wind.md",
+          "installation.md",
+          "icon-generation.md",
+          "release-0.2.3.md",
+          "release-0.2.4.md",
+          "release-0.3.0.md",
+          "release-0.4.0.md",
+          "activation.md",
+          "publishing.md"
+        ]
+      }
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Sunnymark7",
+        "repo": "qihou-desktop",
+        "releaseType": "release"
+      }
+    ]
+  }
+}

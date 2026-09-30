@@ -1,0 +1,16 @@
+node_modules/
+dist/
+release/
+release-*/
+.test-data/
+*.log
+.private/
+.impeccable/
+*.pem
+!shared/*-public.pem
+activation*.txt
+license*.txt
+!assets/LICENSE*.txt
+.env
+.env.*
+docs/evidence/

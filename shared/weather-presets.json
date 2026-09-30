@@ -1,0 +1,18 @@
+{
+  "unknown":{"label":"天气暂不可用","rain":0,"snow":0,"hail":0,"fog":0,"dust":0,"thunder":false,"ice":false},
+  "clear":{"label":"晴","rain":0,"snow":0,"hail":0,"fog":0,"dust":0,"thunder":false,"ice":false},
+  "cloudy":{"label":"多云","rain":0,"snow":0,"hail":0,"fog":0,"dust":0,"thunder":false,"ice":false},
+  "overcast":{"label":"阴","rain":0,"snow":0,"hail":0,"fog":0,"dust":0,"thunder":false,"ice":false},
+  "drizzle":{"label":"毛毛雨","rain":0.2,"snow":0,"hail":0,"fog":0.15,"dust":0,"thunder":false,"ice":false},
+  "rain":{"label":"雨","rain":0.55,"snow":0,"hail":0,"fog":0.1,"dust":0,"thunder":false,"ice":false},
+  "heavy-rain":{"label":"大雨 / 暴雨","rain":1,"snow":0,"hail":0,"fog":0.25,"dust":0,"thunder":false,"ice":false},
+  "freezing-rain":{"label":"冻雨","rain":0.5,"snow":0,"hail":0,"fog":0.15,"dust":0,"thunder":false,"ice":true},
+  "sleet":{"label":"雨夹雪","rain":0.4,"snow":0.45,"hail":0,"fog":0.15,"dust":0,"thunder":false,"ice":false},
+  "snow":{"label":"雪","rain":0,"snow":0.5,"hail":0,"fog":0.15,"dust":0,"thunder":false,"ice":false},
+  "heavy-snow":{"label":"大雪","rain":0,"snow":1,"hail":0,"fog":0.3,"dust":0,"thunder":false,"ice":false},
+  "fog":{"label":"雾","rain":0,"snow":0,"hail":0,"fog":1,"dust":0,"thunder":false,"ice":false},
+  "storm":{"label":"雷雨","rain":0.8,"snow":0,"hail":0,"fog":0.25,"dust":0,"thunder":true,"ice":false},
+  "hail":{"label":"雷雨伴冰雹","rain":0.6,"snow":0,"hail":0.9,"fog":0.15,"dust":0,"thunder":true,"ice":false},
+  "thunder-snow":{"label":"雷雪","rain":0,"snow":0.8,"hail":0,"fog":0.25,"dust":0,"thunder":true,"ice":false},
+  "dust":{"label":"扬沙 / 沙尘","rain":0,"snow":0,"hail":0,"fog":0.35,"dust":0.8,"thunder":false,"ice":false}
+}
